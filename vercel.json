@@ -11,6 +11,10 @@
     {
       "source": "/posts/(.*)",
       "destination": "/"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/api/robots"
     }
   ],
   "headers": [
