@@ -1,0 +1,22 @@
+{
+  "name": "mathphilia-blog",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static math blog for Mathphilia, Gangwon Science High School.",
+  "scripts": {
+    "dev": "node dev-server.js",
+    "serve": "node dev-server.js",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.4.0"
+  },
+  "keywords": [
+    "math",
+    "blog",
+    "latex",
+    "katex",
+    "vercel"
+  ],
+  "license": "UNLICENSED"
+}
