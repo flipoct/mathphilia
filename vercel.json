@@ -13,6 +13,10 @@
       "destination": "/"
     },
     {
+      "source": "/about",
+      "destination": "/"
+    },
+    {
       "source": "/robots.txt",
       "destination": "/api/robots"
     }

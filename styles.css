@@ -78,7 +78,7 @@ svg {
   top: 0;
   z-index: 10;
   display: grid;
-  grid-template-columns: minmax(138px, 210px) 42px minmax(220px, 560px) 42px;
+  grid-template-columns: minmax(138px, 210px) 42px minmax(220px, 560px) auto;
   align-items: center;
   gap: 14px;
   padding: 14px 28px;
@@ -178,6 +178,10 @@ textarea {
   padding: 13px;
   font-family: var(--mono);
   line-height: 1.65;
+}
+
+.compact-textarea {
+  min-height: 120px;
 }
 
 input:focus,
@@ -423,6 +427,54 @@ p {
     box-shadow 180ms ease;
 }
 
+.about-view {
+  width: min(100%, 880px);
+  margin: 0 auto;
+}
+
+.about-panel {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  padding: clamp(24px, 4vw, 48px);
+  box-shadow: var(--shadow);
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.about-copy {
+  color: var(--muted);
+  font-family: var(--serif);
+  font-size: 19px;
+  line-height: 1.75;
+}
+
+.member-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.member-row {
+  display: grid;
+  grid-template-columns: minmax(84px, 120px) 1fr;
+  gap: 14px;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  padding: 13px 0;
+}
+
+.member-cohort {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.nav-button {
+  min-height: 42px;
+  padding: 0 13px;
+}
+
 .post-meta,
 .post-actions {
   display: flex;
@@ -663,7 +715,7 @@ p {
 
 @media (max-width: 860px) {
   .topbar {
-    grid-template-columns: minmax(112px, 1fr) 38px 38px;
+    grid-template-columns: minmax(112px, 1fr) 38px auto 38px;
     align-items: center;
     gap: 10px;
     padding: 12px 14px;
@@ -686,7 +738,7 @@ p {
   }
 
   .topbar-actions {
-    grid-column: 3;
+    grid-column: 3 / 5;
     grid-row: 1;
     justify-content: end;
   }

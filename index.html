@@ -10,22 +10,23 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"
     />
-    <link rel="apple-touch-icon" sizes="57x57" href="icon/apple-icon-57x57.png">
-    <link rel="apple-touch-icon" sizes="60x60" href="icon/apple-icon-60x60.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="icon/apple-icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="76x76" href="icon/apple-icon-76x76.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="icon/apple-icon-114x114.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="icon/apple-icon-120x120.png">
-    <link rel="apple-touch-icon" sizes="144x144" href="icon/apple-icon-144x144.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="icon/apple-icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="icon/apple-icon-180x180.png">
-    <link rel="icon" type="image/png" sizes="192x192"  href="icon/android-icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="icon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="96x96" href="icon/favicon-96x96.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="icon/favicon-16x16.png">
-    <link rel="manifest" href="icon/manifest.json">
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" sizes="57x57" href="/icon/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/icon/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/icon/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/icon/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/icon/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/icon/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/icon/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/icon/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/icon/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icon/favicon-16x16.png">
+    <link rel="manifest" href="/icon/manifest.json">
     <meta name="msapplication-TileColor" content="#ffffff">
-    <meta name="msapplication-TileImage" content="icon/ms-icon-144x144.png">
+    <meta name="msapplication-TileImage" content="/icon/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="/styles.css" />
   </head>
@@ -55,6 +56,7 @@
         </div>
 
         <div class="topbar-actions">
+          <button id="aboutButton" class="ghost-button nav-button" type="button">About</button>
           <div class="theme-toggle">
             <button id="themeToggleButton" class="theme-button" type="button" aria-label="테마 전환" title="테마 전환">
               <span class="theme-icon theme-icon-light" aria-hidden="true">
@@ -90,6 +92,24 @@
         </section>
 
         <article id="postView" class="post-view" aria-live="polite" hidden></article>
+
+        <section id="aboutView" class="about-view" aria-live="polite" hidden>
+          <div class="section-head">
+            <div class="section-title-row">
+              <h1>About Us</h1>
+              <button id="editAboutButton" class="small-icon-button" type="button" aria-label="About Us 수정" title="About Us 수정">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="about-panel">
+            <p id="aboutIntro" class="about-copy"></p>
+            <div id="memberList" class="member-list"></div>
+          </div>
+        </section>
       </main>
 
       <footer class="site-footer">강원과학고등학교 수학 동아리 Mathphilia</footer>
@@ -112,6 +132,32 @@
             취소
           </button>
           <button class="primary-button" value="confirm" type="submit">확인</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="aboutDialog" class="modal">
+      <form id="aboutForm" method="dialog">
+        <h2>About Us 수정</h2>
+        <label>
+          소개 문구
+          <textarea
+            id="aboutIntroInput"
+            class="compact-textarea"
+            rows="4"
+            placeholder="About Us에 표시할 소개 문구"
+          ></textarea>
+        </label>
+        <p>조원은 한 줄에 한 명씩 `기수, 이름` 형식으로 적어주세요.</p>
+        <textarea
+          id="membersInput"
+          rows="10"
+          placeholder="예: 31기, 홍길동"
+        ></textarea>
+        <p id="aboutError" class="error-text" role="alert"></p>
+        <div class="modal-actions">
+          <button class="ghost-button" type="button" id="cancelAbout">취소</button>
+          <button class="primary-button" id="saveAboutButton" type="submit">저장</button>
         </div>
       </form>
     </dialog>

@@ -1,5 +1,6 @@
 const THEME_KEY = "mathphilia.theme.v2";
 const API_URL = "/api/posts";
+const ABOUT_API_URL = "/api/about";
 
 const state = {
   posts: [],
@@ -9,6 +10,10 @@ const state = {
   query: "",
   route: "home",
   loading: true,
+  aboutIntro: "",
+  members: [],
+  aboutLoading: true,
+  pendingUnlock: null,
   previewDraft: null,
 };
 
@@ -18,8 +23,13 @@ const els = {
   postList: document.querySelector("#postList"),
   postCount: document.querySelector("#postCount"),
   postView: document.querySelector("#postView"),
+  aboutView: document.querySelector("#aboutView"),
+  aboutIntro: document.querySelector("#aboutIntro"),
+  memberList: document.querySelector("#memberList"),
   searchInput: document.querySelector("#searchInput"),
   homeLogoButton: document.querySelector("#homeLogoButton"),
+  aboutButton: document.querySelector("#aboutButton"),
+  editAboutButton: document.querySelector("#editAboutButton"),
   writeButton: document.querySelector("#writeButton"),
   backButton: document.querySelector("#backButton"),
   passwordDialog: document.querySelector("#passwordDialog"),
@@ -39,6 +49,13 @@ const els = {
   previewButton: document.querySelector("#previewButton"),
   saveButton: document.querySelector("#saveButton"),
   editorError: document.querySelector("#editorError"),
+  aboutDialog: document.querySelector("#aboutDialog"),
+  aboutForm: document.querySelector("#aboutForm"),
+  aboutIntroInput: document.querySelector("#aboutIntroInput"),
+  membersInput: document.querySelector("#membersInput"),
+  aboutError: document.querySelector("#aboutError"),
+  cancelAbout: document.querySelector("#cancelAbout"),
+  saveAboutButton: document.querySelector("#saveAboutButton"),
   themeToggleButton: document.querySelector("#themeToggleButton"),
 };
 
@@ -49,7 +66,7 @@ async function init() {
   applyTheme(getSavedTheme());
   syncRouteFromLocation();
   renderLoading();
-  await loadPosts();
+  await Promise.all([loadPosts(), loadAbout()]);
   syncRouteFromLocation();
   render();
 }
@@ -63,6 +80,8 @@ function bindEvents() {
   els.writeButton.addEventListener("click", () => ensureUnlocked(() => openEditor()));
   els.backButton.addEventListener("click", () => navigateHome());
   els.homeLogoButton.addEventListener("click", () => navigateHome());
+  els.aboutButton.addEventListener("click", () => navigateAbout());
+  els.editAboutButton.addEventListener("click", () => ensureUnlocked(openAboutEditor));
 
   window.addEventListener("popstate", () => {
     syncRouteFromLocation();
@@ -77,6 +96,7 @@ function bindEvents() {
   els.cancelPassword.addEventListener("click", () => {
     els.passwordInput.value = "";
     els.passwordError.textContent = "";
+    state.pendingUnlock = null;
     els.passwordDialog.close();
   });
 
@@ -89,6 +109,11 @@ function bindEvents() {
 
   els.deleteButton.addEventListener("click", deleteCurrentPost);
   els.previewButton.addEventListener("click", previewDraft);
+  els.aboutForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await saveAbout();
+  });
+  els.cancelAbout.addEventListener("click", () => els.aboutDialog.close());
 
   els.themeToggleButton.addEventListener("click", () => {
     const nextTheme = els.html.dataset.theme === "dark" ? "light" : "dark";
@@ -113,6 +138,24 @@ async function loadPosts() {
   }
 }
 
+async function loadAbout() {
+  state.aboutLoading = true;
+  try {
+    const response = await fetch(ABOUT_API_URL, { headers: { Accept: "application/json" } });
+    if (!response.ok) throw new Error("About API unavailable");
+    const data = await response.json();
+    state.aboutIntro = normalizeAboutIntro(data.intro);
+    state.members = normalizeMembers(data.members);
+  } catch {
+    const response = await fetch("/data/about.json", { headers: { Accept: "application/json" } });
+    const data = await response.json();
+    state.aboutIntro = normalizeAboutIntro(data.intro);
+    state.members = normalizeMembers(data.members);
+  } finally {
+    state.aboutLoading = false;
+  }
+}
+
 function normalizePosts(posts) {
   return Array.isArray(posts)
     ? posts
@@ -126,11 +169,32 @@ function normalizePosts(posts) {
     : [];
 }
 
+function normalizeAboutIntro(intro) {
+  return String(intro || "").trim();
+}
+
+function normalizeMembers(members) {
+  return Array.isArray(members)
+    ? members
+        .map((member) => ({
+          cohort: String(member.cohort || "").trim(),
+          name: String(member.name || "").trim(),
+        }))
+        .filter((member) => member.cohort || member.name)
+    : [];
+}
+
 function syncRouteFromLocation() {
   const match = window.location.pathname.match(/^\/posts\/([^/]+)\/?$/);
   if (match) {
     state.route = "post";
     state.activeId = decodeURIComponent(match[1]);
+    return;
+  }
+
+  if (/^\/about\/?$/.test(window.location.pathname)) {
+    state.route = "about";
+    state.activeId = null;
     return;
   }
 
@@ -157,6 +221,17 @@ function navigateHome(options = {}) {
   state.route = "home";
   state.activeId = null;
   const nextUrl = "/";
+  if (window.location.pathname !== nextUrl) {
+    history[options.replace ? "replaceState" : "pushState"]({}, "", nextUrl);
+  }
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function navigateAbout(options = {}) {
+  state.route = "about";
+  state.activeId = null;
+  const nextUrl = "/about";
   if (window.location.pathname !== nextUrl) {
     history[options.replace ? "replaceState" : "pushState"]({}, "", nextUrl);
   }
@@ -192,8 +267,19 @@ function render() {
     renderPost(activePost);
     els.homeView.hidden = true;
     els.postView.hidden = false;
+    els.aboutView.hidden = true;
     els.backButton.hidden = false;
     document.title = `${activePost.title} | Mathphilia`;
+    return;
+  }
+
+  if (state.route === "about") {
+    renderAbout();
+    els.homeView.hidden = true;
+    els.postView.hidden = true;
+    els.aboutView.hidden = false;
+    els.backButton.hidden = false;
+    document.title = "About Us | Mathphilia";
     return;
   }
 
@@ -201,6 +287,7 @@ function render() {
     renderNotFound();
     els.homeView.hidden = true;
     els.postView.hidden = false;
+    els.aboutView.hidden = true;
     els.backButton.hidden = false;
     document.title = "글을 찾을 수 없습니다 | Mathphilia";
     return;
@@ -208,6 +295,7 @@ function render() {
 
   els.homeView.hidden = false;
   els.postView.hidden = true;
+  els.aboutView.hidden = true;
   els.backButton.hidden = true;
   document.title = "Mathphilia";
 }
@@ -298,11 +386,39 @@ function renderNotFound() {
   `;
 }
 
+function renderAbout() {
+  els.aboutIntro.innerHTML = escapeHtml(
+    state.aboutIntro || "Mathphilia를 함께 만드는 사람들입니다.",
+  ).replace(/\n/g, "<br>");
+
+  if (state.aboutLoading) {
+    els.memberList.innerHTML = `<div class="empty-state"><p>조원 정보를 불러오는 중입니다.</p></div>`;
+    return;
+  }
+
+  if (!state.members.length) {
+    els.memberList.innerHTML = `<div class="empty-state"><p>아직 등록된 조원이 없습니다.</p></div>`;
+    return;
+  }
+
+  els.memberList.innerHTML = state.members
+    .map(
+      (member) => `
+        <div class="member-row">
+          <span class="member-cohort">${escapeHtml(member.cohort)}</span>
+          <strong>${escapeHtml(member.name)}</strong>
+        </div>
+      `,
+    )
+    .join("");
+}
+
 function ensureUnlocked(callback) {
   if (state.password) {
     callback();
     return;
   }
+  state.pendingUnlock = callback;
   els.passwordDialog.showModal();
   els.passwordInput.focus();
 }
@@ -321,7 +437,9 @@ async function unlockWithPassword() {
     state.password = password;
     els.passwordInput.value = "";
     els.passwordDialog.close();
-    openEditor(state.editingId);
+    const pendingUnlock = state.pendingUnlock;
+    state.pendingUnlock = null;
+    if (pendingUnlock) pendingUnlock();
   } catch {
     els.passwordError.textContent = "비밀번호가 맞지 않습니다.";
   }
@@ -355,6 +473,55 @@ function openDraftEditor() {
   els.editorError.textContent = "";
   els.editorDialog.showModal();
   els.titleInput.focus();
+}
+
+function openAboutEditor() {
+  els.aboutIntroInput.value = state.aboutIntro;
+  els.membersInput.value = state.members
+    .map((member) => `${member.cohort}, ${member.name}`.replace(/^,\s*/, "").replace(/,\s*$/, ""))
+    .join("\n");
+  els.aboutError.textContent = "";
+  els.aboutDialog.showModal();
+  els.membersInput.focus();
+}
+
+async function saveAbout() {
+  const intro = els.aboutIntroInput.value.trim();
+  const members = els.membersInput.value
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [cohort, ...nameParts] = line.split(",");
+      return {
+        cohort: (cohort || "").trim(),
+        name: nameParts.join(",").trim(),
+      };
+    })
+    .filter((member) => member.cohort || member.name);
+
+  els.aboutError.textContent = "";
+  els.saveAboutButton.disabled = true;
+  try {
+    const response = await fetch(ABOUT_API_URL, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Blog-Password": state.password,
+      },
+      body: JSON.stringify({ intro, members }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "저장에 실패했습니다.");
+    state.aboutIntro = normalizeAboutIntro(data.intro);
+    state.members = normalizeMembers(data.members);
+    els.aboutDialog.close();
+    renderAbout();
+  } catch (error) {
+    els.aboutError.textContent = error.message;
+  } finally {
+    els.saveAboutButton.disabled = false;
+  }
 }
 
 function returnToDraftEditor() {

@@ -4,6 +4,7 @@ const path = require("path");
 
 const postsHandler = require("./api/posts");
 const authHandler = require("./api/auth");
+const aboutHandler = require("./api/about");
 
 const root = process.cwd();
 const port = Number(process.env.PORT || 5173);
@@ -31,6 +32,10 @@ const server = http.createServer(async (req, res) => {
 
     if (url.pathname === "/api/auth") {
       return runApi(authHandler, req, res);
+    }
+
+    if (url.pathname === "/api/about") {
+      return runApi(aboutHandler, req, res);
     }
 
     return serveStatic(url.pathname, res);
